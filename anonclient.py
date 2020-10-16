@@ -1,23 +1,38 @@
 import socket
 import sys
 import struct
+import random
+import logging
 
 #functions
-def flagSet(zeroPad, A, S, F):
-    if A:
-        print("A: ", A)
-        zeroPad[3] = zeroPad | b'4'
-
-    if S:
-        print("S: ", S)
-        zeroPad[3] = zeroPad | b'2'
-
-    if F:
-        print("F: ", F)
-        zeroPad[3] = zeroPad | b'1'
-    print("zeropad in function: ", zeroPad)
-
  
+def packThePacket(sNum, aNum, A, S, F):
+	#This struct needs some work but will otherwise function
+	packer = struct.Struct('>iii')
+	print(A*2*2 + S*2 + F, hex(sNum), hex(aNum))
+	lastLine = A*2*2 + S*2 + F
+	packet = packer.pack(sNum, aNum, lastLine)
+	print(packet)
+	return packet
+
+def stopAndWait(mySocket):
+	mySocket.settimeout(currentTime)
+	servMsg = mySocket.recvfrom(bufferSize)
+	while !servMsg :
+		numFails = numFails + 1
+		currentTime = currentTime + min((2**numFails + randomrange(0,100)), maxWait)
+	return servMsg
+
+#getting command line arguments
+for args in sys.argv:
+    if args == '-s':
+        server = sys.argv[sys.argv.index(args)+1]
+    elif args == '-p':
+        port = int(sys.argv[sys.argv.index(args)+1])
+    elif args == '-l':
+        logfile = sys.argv[sys.argv.index(args)+1]
+
+
 
 msgFromClient       = "Hello UDP Server"
 
@@ -27,34 +42,25 @@ serverAddressPort   = ("127.0.0.1", 20001)
 
 bufferSize          = 1024
 
+#Maximum amount of time to wait for stop and wait protocol
+maxWait = 2000
+
+#Number of failed attempts to send/recieve data from server
+numFails = 0
+
 #Sets sequence number to 32 bits
 seqNumber = 12345
-seqPad = 32 - sys.getsizeof(seqNumber)
 
 #Sets ACK number to 32 bits
 ackNumber = 100
-ackPad = 32 - sys.getsizeof(ackNumber)
 
 #Creates the unused portion
-zeroPad = bytearray(4)
-print(zeroPad)
-
 #Set default for flags
-A = b'0'
-S = b'1'
-F = b'0'
+A = 0
+S = 1
+F = 0
 
-#Get flags from flag packer
-flagSet(zeroPad, A, S, F)
-
-
-#Then pack it all here
-myPacket = struct.pack('!i', seqPad)
-myPacket += struct.pack('!i', seqNumber)
-myPacket += struct.pack('!i', ackPad)
-myPacket += struct.pack('!i', ackNumber)
-#myPacket += struct.pack('!i', zeroPad)
-#myPacket += struct.pack('!i', placeholder for flags at some point)
+firstPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 
 # Create a UDP socket at client side
 
@@ -75,3 +81,20 @@ msgFromServer = UDPClientSocket.recvfrom(bufferSize)
 msg = "Message from Server {}".format(msgFromServer[0])
 
 print(msg)
+
+#General structure
+while(1):
+	
+	#Wait for response
+	
+	#Perform the appropriate actions for response
+	
+	#Send the response
+	
+	while(#FIN flag is not set):
+	
+		#Wait for the response
+		
+		#Download response
+		
+		#Send seq and ack

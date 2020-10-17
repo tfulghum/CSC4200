@@ -15,9 +15,10 @@ def packThePacket(sNum, aNum, A, S, F):
 	return packet
 
 def stopAndWait(mySocket)
-	mySocket.settimeout(currentTime)
-	servMsg = mySocket.recvfrom(bufferSize)
-	while !servMsg :
+	servMsg = 0
+	while not servMsg:
+		mySocket.settimeout(currentTime)
+		servMsg = mySocket.recvfrom(bufferSize)
 		numFails = numFails + 1
 		currentTime = currentTime + min((2**numFails + randomrange(0,100)), maxWait)
 	return servMsg

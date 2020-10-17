@@ -1,10 +1,17 @@
 import socket
+import struct
+import sys
 
- 
+ #getting command line arguments
+for args in sys.argv:
+    if args == '-p':
+        localPort = int(sys.argv[sys.argv.index(args)+1])
+    if args == '-l':
+        logfile = sys.argv[sys.argv.index(args)+1]
+    if args == '-u':
+        url = sys.argv[sys.argv.index(args)+1]
 
-localIP     = "127.0.0.1"
-
-localPort   = 20001
+localIP     = socket.gethostbyname(socket.gethostname())
 
 bufferSize  = 1024
 

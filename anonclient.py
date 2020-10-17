@@ -17,7 +17,7 @@ def packThePacket(sNum, aNum, A, S, F):
 
 def stopAndWait(mySocket, buffSiz):
 	servMsg = 0
-	mySocket.setdefaulttimeout(currentTime)
+	mySocket.setdefaulttimeout(500)
 	
 	#Can get rid of exponential backoff
 	while not servMsg:
@@ -77,6 +77,15 @@ def msgParserPayload(msg):
 	
 	return seqNumber, ackNumber, A, S, F, payload
 
+def packetReceivedLog(sNum, aNum, A, S, F, File_object, logType):
+	if logType == 0:
+		File_object.write(f"RECV {sNum} {aNum} ")
+	elif logType == 1:
+		File_object.write(f"SEND {sNum} {aNum} ")
+	elif logType == 2:
+		File_object.write(f"RETRAN {sNum} {aNum} ")
+
+
 #getting command line arguments
 for args in sys.argv:
     if args == '-s':
@@ -86,6 +95,7 @@ for args in sys.argv:
     elif args == '-l':
         logfile = sys.argv[sys.argv.index(args)+1]
 		
+File_object = open(logfile, "w")
 
 msgFromClient       = "Hello UDP Server"
 
@@ -123,12 +133,18 @@ UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
 # Send to server using created UDP socket
 UDPClientSocket.sendto(firstPacket, serverAddressPort)
+logType = 0
+
+#log to file
+packetReceivedLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 
 #Response from the server
 msg = stopAndWait(UDPClientSocket, bufferSize)
 
 #Parse the response
 seqNumber, ackNumber, A, S, F = msgParser(msg)
+logtype = 1
+
 
 #Kept for debugging
 print(seqNumber, ackNumber, A, S, F)

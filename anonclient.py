@@ -17,14 +17,13 @@ def packThePacket(sNum, aNum, A, S, F):
 
 def stopAndWait(mySocket, buffSiz):
 	servMsg = 0
-	mySocket.settimeout(currentTime)
+	mySocket.setdefaulttimeout(currentTime)
 	
 	#Can get rid of exponential backoff
 	while not servMsg:
 		servMsg = mySocket.recvfrom(buffSiz)
-		servMsg = "Message from Server {}".format(msgFromServer[0])
-		numFails = numFails + 1
-		currentTime = currentTime + min((2**numFails + randomrange(0,100)), maxWait)
+		#I don't think we need this anymore
+		#servMsg = "Message from Server {}".format(msgFromServer[0])
 	return servMsg
 
 def msgParser(msg):
@@ -51,6 +50,32 @@ def msgParser(msg):
 		F = 0
 	
 	return seqNumber, ackNumber, A, S, F
+	
+def msgParserPayload(msg):
+	packer = struct.Struct('>iii512i')
+	unpackedMsg = packer.unpack(msg)
+	seqNumber = unpackedMsg[0]
+	ackNumber = unpackedMsg[1]
+	flags = unpackedMsg[2]
+	payload = unpackedMsg[3]
+	
+	#Determines which flags are set based on the value of the flags variable
+	if flags >= 4:
+		A = 1
+		flags = flags - 4
+	else:
+		A = 0
+	if flags >= 2:
+		S = 1
+		flags = flags - 2
+	else:
+		S = 0
+	if flags >= 1:
+		F = 1
+	else:
+		F = 0
+	
+	return seqNumber, ackNumber, A, S, F, payload
 
 #getting command line arguments
 for args in sys.argv:
@@ -121,13 +146,9 @@ while(not F):
 	seqNumber, ackNumber, A, S, F = msgParser(msg)
 	print(seqNumber, ackNumber, A, S, F)
 	
-	#Send seq and ack
-	if F:
-		#Send last ACK and close out
-	else:
-		#Send ACK and seq
-		if A:
-			newAckNumber = seqNumber+1
-		if S:
-			newSeqValue = ack+1
-	
+	#Send seq and ack depending on recieved values
+	if A:
+		newAckNumber = seqNumber+1
+	if S:
+		newSeqValue = ack+1
+	myPacket = packer.pack(newSeqNumber, newAckNumber, A, S, F)

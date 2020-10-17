@@ -15,15 +15,23 @@ def packThePacket(sNum, aNum, A, S, F):
 	print(packet)
 	return packet
 
-def stopAndWait(mySocket, buffSiz):
+def stopAndWait(mySocket, buffSiz, myPacket, portNum, seqNumber, ackNumber, A, S, F, File_object):
 	servMsg = 0
 	mySocket.setdefaulttimeout(500)
 	
 	#Can get rid of exponential backoff
 	while not servMsg:
 		servMsg = mySocket.recvfrom(buffSiz)
-		#I don't think we need this anymore
-		#servMsg = "Message from Server {}".format(msgFromServer[0])
+		
+		if not servMsg:
+			#Resends the packet
+			UDPClientSocket.sendto(firstPacket, serverAddressPort)
+			
+			#Logs that a retransmit was made
+			logType = 2
+			packetReceivedLog(seqNumber, ackNumber, A, S, F, File_object, logType)
+			#I don't think we need this anymore
+			#servMsg = "Message from Server {}".format(msgFromServer[0])
 	return servMsg
 
 def msgParser(msg):
@@ -139,7 +147,7 @@ logType = 0
 packetReceivedLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 
 #Response from the server
-msg = stopAndWait(UDPClientSocket, bufferSize)
+msg = stopAndWait(UDPClientSocket, bufferSize, firstPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
 
 #Parse the response
 seqNumber, ackNumber, A, S, F = msgParser(msg)
@@ -158,7 +166,7 @@ UDPClientSocket.sendto(myPacket, serverAddressPort)
 #Payload loop
 while(not F):
 	#Get response from the server
-	msg = stopAndWait(UDPClientSocket, bufferSize)
+	msg = stopAndWait(UDPClientSocket, bufferSize, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
 	seqNumber, ackNumber, A, S, F = msgParser(msg)
 	print(seqNumber, ackNumber, A, S, F)
 	

@@ -15,7 +15,7 @@ def packThePacket(sNum, aNum, A, S, F):
 	print(packet)
 	return packet
 
-def stopAndWait(mySocket)
+def stopAndWait(mySocket):
 	servMsg = 0
 	while not servMsg:
 		mySocket.settimeout(currentTime)
@@ -39,7 +39,7 @@ msgFromClient       = "Hello UDP Server"
 
 bytesToSend         = str.encode(msgFromClient)
 
-serverAddressPort   = ("127.0.0.1", 20001)
+serverAddressPort   = (server, port)
 
 bufferSize          = 1024
 
@@ -67,35 +67,31 @@ firstPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
- 
 
 # Send to server using created UDP socket
-
 UDPClientSocket.sendto(bytesToSend, serverAddressPort)
 
  
-
 msgFromServer = UDPClientSocket.recvfrom(bufferSize)
 
- 
 
 msg = "Message from Server {}".format(msgFromServer[0])
 
 print(msg)
 
 #General structure
-while(1):
 	
-	#Wait for response
+#Wait for response
+
+
+#Perform the appropriate actions for response
 	
-	#Perform the appropriate actions for response
+#Send the response
 	
-	#Send the response
+while(not F):
 	
-	while(#FIN flag is not set):
-	
-		#Wait for the response
+	#Wait for the response
 		
-		#Download response
+	#Download response
 		
-		#Send seq and ack
+	#Send seq and ack

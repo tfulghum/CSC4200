@@ -15,14 +15,42 @@ def packThePacket(sNum, aNum, A, S, F):
 	print(packet)
 	return packet
 
-def stopAndWait(mySocket):
+def stopAndWait(mySocket, buffSiz):
 	servMsg = 0
+	mySocket.settimeout(currentTime)
+	
+	#Can get rid of exponential backoff
 	while not servMsg:
-		mySocket.settimeout(currentTime)
-		servMsg = mySocket.recvfrom(bufferSize)
+		servMsg = mySocket.recvfrom(buffSiz)
+		servMsg = "Message from Server {}".format(msgFromServer[0])
 		numFails = numFails + 1
 		currentTime = currentTime + min((2**numFails + randomrange(0,100)), maxWait)
 	return servMsg
+
+def msgParser(msg):
+	packer = struct.Struct('>iii')
+	unpackedMsg = packer.unpack(msg)
+	seqNumber = unpackedMsg[0]
+	ackNumber = unpackedMsg[1]
+	flags = unpackedMsg[2]
+	
+	#Determines which flags are set based on the value of the flags variable
+	if flags >= 4:
+		A = 1
+		flags = flags - 4
+	else:
+		A = 0
+	if flags >= 2:
+		S = 1
+		flags = flags - 2
+	else:
+		S = 0
+	if flags >= 1:
+		F = 1
+	else:
+		F = 0
+	
+	return seqNumber, ackNumber, A, S, F
 
 #getting command line arguments
 for args in sys.argv:
@@ -32,8 +60,7 @@ for args in sys.argv:
         port = int(sys.argv[sys.argv.index(args)+1])
     elif args == '-l':
         logfile = sys.argv[sys.argv.index(args)+1]
-
-
+		
 
 msgFromClient       = "Hello UDP Server"
 
@@ -44,7 +71,7 @@ serverAddressPort   = (server, port)
 bufferSize          = 1024
 
 #Maximum amount of time to wait for stop and wait protocol
-maxWait = 2000
+maxWait = 500
 
 #Number of failed attempts to send/recieve data from server
 numFails = 0
@@ -53,7 +80,7 @@ numFails = 0
 seqNumber = 12345
 
 #Sets ACK number to 32 bits
-ackNumber = 100
+ackNumber = 0
 
 #Creates the unused portion
 #Set default for flags
@@ -67,31 +94,40 @@ firstPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
+#Handshake start
 
 # Send to server using created UDP socket
-UDPClientSocket.sendto(bytesToSend, serverAddressPort)
+UDPClientSocket.sendto(firstPacket, serverAddressPort)
 
- 
-msgFromServer = UDPClientSocket.recvfrom(bufferSize)
+#Response from the server
+msg = stopAndWait(UDPClientSocket, bufferSize)
 
+#Parse the response
+seqNumber, ackNumber, A, S, F = msgParser(msg)
 
-msg = "Message from Server {}".format(msgFromServer[0])
+#Kept for debugging
+print(seqNumber, ackNumber, A, S, F)
 
-print(msg)
+#Create response packet
+myPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 
-#General structure
+#Second half of handshake
+UDPClientSocket.sendto(myPacket, serverAddressPort)
 	
-#Wait for response
-
-
-#Perform the appropriate actions for response
-	
-#Send the response
-	
+#Payload loop
 while(not F):
+	#Get response from the server
+	msg = stopAndWait(UDPClientSocket, bufferSize)
+	seqNumber, ackNumber, A, S, F = msgParser(msg)
+	print(seqNumber, ackNumber, A, S, F)
 	
-	#Wait for the response
-		
-	#Download response
-		
 	#Send seq and ack
+	if F:
+		#Send last ACK and close out
+	else:
+		#Send ACK and seq
+		if A:
+			newAckNumber = seqNumber+1
+		if S:
+			newSeqValue = ack+1
+	

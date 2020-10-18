@@ -153,7 +153,6 @@ msg = stopAndWait(UDPClientSocket, bufferSize, firstPacket, serverAddressPort, s
 seqNumber, ackNumber, A, S, F = msgParser(msg)
 logtype = 1
 
-
 #Kept for debugging
 print(seqNumber, ackNumber, A, S, F)
 
@@ -174,5 +173,5 @@ while(not F):
 	if A:
 		newAckNumber = seqNumber+1
 	if S:
-		newSeqValue = ack+1
-	myPacket = packer.pack(newSeqNumber, newAckNumber, A, S, F)
+		newSeqNumber = ackNumber+1
+	myPacket = packer.pack(newSeqNumber, newAckNumber, A, S, F)#what is packer?

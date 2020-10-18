@@ -1,3 +1,4 @@
+  
 import socket
 import sys
 import struct
@@ -17,7 +18,7 @@ def packThePacket(sNum, aNum, A, S, F):
 
 def stopAndWait(mySocket, buffSiz, myPacket, portNum, seqNumber, ackNumber, A, S, F, File_object):
 	servMsg = 0
-	mySocket.setdefaulttimeout(500)
+	mySocket.settimeout(0.5)
 	
 	#Can get rid of exponential backoff
 	while not servMsg:
@@ -35,8 +36,8 @@ def stopAndWait(mySocket, buffSiz, myPacket, portNum, seqNumber, ackNumber, A, S
 	return servMsg
 
 def msgParser(msg):
-	packer = struct.Struct('>iii')
-	unpackedMsg = packer.unpack(msg)
+	packer = '>iii'
+	unpackedMsg = struct.unpack('>iii', msg)
 	seqNumber = unpackedMsg[0]
 	ackNumber = unpackedMsg[1]
 	flags = unpackedMsg[2]
@@ -111,7 +112,7 @@ bytesToSend         = str.encode(msgFromClient)
 
 serverAddressPort   = (server, port)
 
-bufferSize          = 1024
+bufferSize          = 96
 
 #Maximum amount of time to wait for stop and wait protocol
 maxWait = 500
@@ -148,9 +149,9 @@ packetReceivedLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 
 #Response from the server
 msg = stopAndWait(UDPClientSocket, bufferSize, firstPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
-
+print(msg)
 #Parse the response
-seqNumber, ackNumber, A, S, F = msgParser(msg)
+seqNumber, ackNumber, A, S, F = msgParser(msg[0])
 logtype = 1
 
 #Kept for debugging
@@ -172,6 +173,10 @@ while(not F):
 	#Send seq and ack depending on recieved values
 	if A:
 		newAckNumber = seqNumber+1
-	if S:
-		newSeqNumber = ackNumber+1
-	myPacket = packer.pack(newSeqNumber, newAckNumber, A, S, F)#what is packer?
+
+	newAckNumber = seqNumber
+	newSeqNumber = ackNumber + 1
+
+	myPacket = struct.pack(newSeqNumber, newAckNumber, A, S, F)#what is packer?
+
+UDPClientSocket.close()
